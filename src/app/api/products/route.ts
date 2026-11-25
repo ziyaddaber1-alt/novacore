@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProducts, saveProducts, getSettings } from "@/lib/db";
 import { requireAdmin, isAdminAuthenticated } from "@/lib/auth";
+import * as crypto from "crypto";
 
 export async function GET() {
   const products = await getProducts();
@@ -31,6 +32,10 @@ export async function POST(req: Request) {
     updatedAt: now,
   };
   const products = [...(await getProducts()), product];
-  await saveProducts(products);
+  try {
+    await saveProducts(products);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to save product" }, { status: 500 });
+  }
   return NextResponse.json(product, { status: 201 });
 }
