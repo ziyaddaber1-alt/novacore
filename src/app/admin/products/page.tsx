@@ -97,15 +97,6 @@ export default function ProductsPage() {
     if (res.ok) await load();
   };
 
-  const handleUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    if (!res.ok) throw new Error("Upload failed");
-    const { url } = await res.json();
-    setForm((p) => ({ ...p, image: url }));
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -237,21 +228,7 @@ export default function ProductsPage() {
                 <label className="text-xs font-bold uppercase tracking-widest text-steel-light">Image URL</label>
                 <div className="relative">
                   <input value={form.image} onChange={(e) => setForm((p) => ({ ...p, image: e.target.value }))} className="w-full px-4 py-3 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="/grinder1.jpeg" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = "image/*";
-                      input.onchange = async (ev: any) => {
-                        try { await handleUpload(ev.target.files[0]); } catch (err: any) { setError(err?.message || "Upload failed"); }
-                      };
-                      input.click();
-                    }}
-                    className="absolute right-2 top-2 text-xs text-steel-light hover:text-white underline underline-offset-4"
-                  >
-                    Upload
-                  </button>
+                  <span className="absolute right-2 top-2 text-xs text-steel-light">Use external image URL (e.g. your own hosting)</span>
                 </div>
               </div>
               <div className="space-y-2">
