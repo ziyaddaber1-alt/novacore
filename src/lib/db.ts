@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 
 export interface Product {
   id: string;
@@ -53,14 +53,22 @@ const KEYS = {
   SETTINGS: "settings",
 };
 
-function isKvConfigured(): boolean {
-  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+function isRedisConfigured(): boolean {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+function getRedis() {
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
 }
 
 export async function getProducts(): Promise<Product[]> {
-  if (!isKvConfigured()) return [];
+  if (!isRedisConfigured()) return [];
   try {
-    const data = await kv.get<Product[]>(KEYS.PRODUCTS);
+    const redis = getRedis();
+    const data = await redis.get<Product[]>(KEYS.PRODUCTS);
     return data ?? [];
   } catch {
     return [];
@@ -68,8 +76,9 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function saveProducts(products: Product[]): Promise<void> {
-  if (!isKvConfigured()) return;
-  await kv.set(KEYS.PRODUCTS, products);
+  if (!isRedisConfigured()) throw new Error("Upstash Redis not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.");
+  const redis = getRedis();
+  await redis.set(KEYS.PRODUCTS, products);
 }
 
 export async function getProduct(id: string): Promise<Product | undefined> {
@@ -78,9 +87,10 @@ export async function getProduct(id: string): Promise<Product | undefined> {
 }
 
 export async function getOrders(): Promise<Order[]> {
-  if (!isKvConfigured()) return [];
+  if (!isRedisConfigured()) return [];
   try {
-    const data = await kv.get<Order[]>(KEYS.ORDERS);
+    const redis = getRedis();
+    const data = await redis.get<Order[]>(KEYS.ORDERS);
     return data ?? [];
   } catch {
     return [];
@@ -88,12 +98,13 @@ export async function getOrders(): Promise<Order[]> {
 }
 
 export async function saveOrders(orders: Order[]): Promise<void> {
-  if (!isKvConfigured()) return;
-  await kv.set(KEYS.ORDERS, orders);
+  if (!isRedisConfigured()) throw new Error("Upstash Redis not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.");
+  const redis = getRedis();
+  await redis.set(KEYS.ORDERS, orders);
 }
 
 export async function getSettings(): Promise<Settings> {
-  if (!isKvConfigured()) {
+  if (!isRedisConfigured()) {
     return {
       admin: { username: "admin", passwordHash: "" },
       store: { name: "NOVA CORE", email: "hello@novacore.store", currency: "MAD" },
@@ -101,7 +112,8 @@ export async function getSettings(): Promise<Settings> {
     };
   }
   try {
-    const data = await kv.get<Settings>(KEYS.SETTINGS);
+    const redis = getRedis();
+    const data = await redis.get<Settings>(KEYS.SETTINGS);
     if (data) return data;
   } catch {}
   return {
@@ -112,8 +124,9 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  if (!isKvConfigured()) return;
-  await kv.set(KEYS.SETTINGS, settings);
+  if (!isRedisConfigured()) throw new Error("Upstash Redis not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.");
+  const redis = getRedis();
+  await redis.set(KEYS.SETTINGS, settings);
 }
 
 export async function getCategories(): Promise<string[]> {
